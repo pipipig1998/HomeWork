@@ -1,0 +1,227 @@
+\documentclass{article}
+\renewcommand\thesection{\Roman{section}}
+
+\usepackage[utf8]{inputenc}
+\usepackage{authblk}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{float}
+\title{Deep Learning Model for Human Activity Recognition and Prediction in Smart Homes}
+\author{Wang Cheng, Peng Zhihao}
+\affil{School of Digital Arts and Design, Dalian Neusoft University of Information, Dalian 116626, China wangcheng@neusoft.edu.cn}
+\begin{document}
+
+\maketitle
+\begin{abstract}
+    Abstract—To solve the limitation problem of traditional human activity recognition (HAR) tasks which use features extracted manually and some shallow machine learning models, a novel multi-task layer neural network (LSTM) model is proposed based on the ability of deep neural network to automatically extract features in a smart home, combined with the recent successful recurrent neural network and convolution neural network. Prediction techniques based on LSTM neural networks in smart home environments have been used to predicting the next activity as well as on the task of predicting the timestamp of the next event as well. The performance of the model is evaluated on the real dataset. Experimental results show that the LSTM neural networks outperform the other approaches for the prediction of the direct next event, meanwhile, the application of multi-task learning by jointly predicting the next activity and the timestamp of the next event outperforms separate LSTM models for both tasks separately.
+    
+    Keywords- Neural networks; Human activity recognition; Deep neural network; Long-term memory model
+\end{abstract}
+
+\section{INTRODUCTION}
+In recent years, technological advancements within the areas of sensor and communication technologies have led to a fast proliferation of smart home environments and ambient assisted living systems. Human activity recognition (HAR) refers to the recognition of different human activities based on sensor information, including simple actions to complex activities, such as running and walking. HAR systems are applied to a large number of context-awareness applications, such as drug intake, health monitoring and fitness tracking (such as wechat step counting).
+
+Traditional human activity recognition system first extracts features based on human body set or motion feature information and spatiotemporal interest points, then it uses shallow supervised machine learning algorithms such as support vector machine (SVM) and random forest (RF) for recognition. These methods rely heavily on manual feature extraction, which is usually limited by human domain knowledge and could only learn shallow features.
+
+At present, deep learning has been successful in the field of visual object recognition and natural language processing, mainly because it can automatically extract multi-level feature structure from data. Convolutional neural network (CNN) is a variant of deep neural network (DNN), which can act as a feature extractor. This kind of model usually stacks multiple convolution operators to create hierarchies and gradually build more abstract features. Both the long-
+
+
+
+term memory model (LSTM) and the gated loop model (GRU) are variants of the loop network, including a structure called a memory cell, which is used to fit the time dependence in the time series problem.
+
+Due to the excellent performance of deep learning, more and more researchers have tried to apply deep learning to human activity recognition and prediction, they have achieved great success. However, these studies usually only use a simple neural network model. In this paper, a new multi-tasks layer neural network model, which is a combination of CNN and LSTM, is constructed and tested on three open datasets to verify the recognition and prediction ability of the model.
+
+This paper is oganized as follows. In Section II we describe basic concepts and notation. In Section III we address the task of recognition and prediction of the next activity in smart home datasets. In Section IV we evaluate and discuss the prediction techniques for the prediction of a window of multiple next activities. Section V concludes this paper.
+
+
+\section{RELATED WORK}
+The research of human activity recognition based on sensors can be divided into two categories: shallow machine learning and deep learning.
+
+Shallow machine learning methods rely on the characteristics of artificial design, but it needs domain experience. Most of the existing feature extraction methods use the statistical features of the original signal, such as mean, variance, entropy and correlation coefficient. For HAR, extracted features are fed to some shallow machine learning models, such as SVM and RF. Another branch of HAR feature extraction is transform coding, which uses Fourier and wavelet transform to capture frequency domain features. However, the feature design of handwork is limited by human knowledge.
+
+In depth learning method, DNN framework is used for automatic feature extraction and classification, and good results are achieved in the field of HAR. The early research on deep learning mainly focuses on feature representation in HAR. Deep belief network (DBN) is used to extract features from perceptual signals, but the model can't surpass handmade features, because DBN doesn't consider the order of time series signals.
+
+CNN is also applied to human activity recognition. Through the combination of pooling layer, sub sampling layer and full connection layer, the layered feature extraction is realized to provide rich information for classification layer.
+
+In some work, different sensor modes are used as images
+and fed to 2D CNN for feature extraction. It is proved that
+the model can capture significant features in spatial domain
+and is superior to shallow machine learning. In addition, in
+order to capture the long-term information in time series,
+part of the work applies the cyclic neural network (RNN)
+with LSTM to HAR.
+But for HAR system, only CNN and RNN are used
+separately is not enough, because for HAR problem, it has
+multi-modal complex signal input, and its input is time series.
+The hybrid model proposed in this paper takes both of them
+into account. The high-level feature of multimodal input is
+extracted by CNN, and the time-dependent feature of input is
+extracted by RNN, they work together aim to achieve better
+results.
+In this paper we assume that there are k different sensors
+equipped to monitor human behavior. For example, the
+smart watch is equipped with accelerometers and gyroscopes,
+in which each sensor can generate multi-dimensional signals
+(for example, the accelerometer generates three-dimensional
+signals along the x, y and z axes). The k-th sensor signal is
+expressed as:
+\begin{equation}
+     S_{k}^{t}=[S_{k}^{1},...,S_{k}^{N}] \qquad k=1,...,K \label{1}
+\end{equation}
+Where $S_{k}^t$ is the signal output at time t and N is the signal
+length. In actual deployment, the sensor signal may contain
+noise, so $S_{k}^t$can be expressed as:
+\begin{equation}
+    S_{k}^{t*}=S_{k}^{t}+\omega_{t}\qquad t=1,...,N  \label{2}
+\end{equation}
+\section{THE PROPOSED HAR MODEL}
+\subsection{Data preprocessing}
+In order to capture the noise and frequency characteristics of high-dimensional sensor signal, a comprehensive data preprocessing technology is proposed in this paper, including data enhancement, fast Fourier transform and data segmentation.
+\begin{itemize}
+    \item [(1)]Data enhancement: in order to adapt to different noise modes, the training data set is increased by adding Gaussian random noise to each standardized instance in the training set, and each standardized instance will generate 9 noise instances, and the data set with noise instances is generated by combining the original training data to form a new training data set.
+    \item [(2)]Fast Fourier transform: in order to capture the frequency characteristics, the time series$S_{k}$ image is divided into small non overlapping intervals (m = 0.25s set in the test) with a width of m, and the fast Fourier transform is applied to each time interval to generate the spectrum diagram.  The
+signal spectrum is a function of time and frequency, indicating the change of energy content of the signal, which can capture the frequency relationship between the nearest data points. Use $X_{k}^{i}$ image to show the spectrum in the ith time interval.
+    \item [(3)]Data segmentation: the spectral sequence $S_{k}^{i}$image is segmented into sequences of the same size by using T and 25\% overlapping sliding windows, and these segments are represented as $|S_{k}^{1},...S_{k}^{T}|$ After data segmentation, each segment serves as input to the model to detect possible activity.
+\end{itemize}
+\subsection{Neural Networks \& Recurrent Neural Networks}
+The neural network consists of one layer of units as input,
+one layer of units as output, and those in-between are
+multiple layers which are referred to as hidden units. The
+weights of the weighted sum of each unit are learned through
+gradient-based optimization from the training data which
+consists of example inputs and desired outputs for those
+example inputs. Recurrent Neural Networks (RNNs) are a
+special type of neural networks where the connections
+between neurons form directed cycle, RNNs could be
+unfolded(as shown in Fig1). Each step in the unfolding is
+referred to as a time step, where$x_{t}$is as input at time t.$s_{t}$is
+the hidden state at time t which contains information
+extracted from all time steps up to t. The hidden state s is
+updated with information of the new input $x_{t}$ after  each  time  step:
+$s_{t}=f(Ux_{t}+Ws_{t-1})$, where U and W are vectors for weights over the new inputs and hidden state respectively. In fact, either the hyperbolic tangent or the logistic function is generally used for function f, which is referred to as the activation function. The logistic function is defined  as: 
+$sigmoid(x)=\frac{1}{1+exp(-x)}$ In neural network
+literature, the Sigmoid function is often represented by $\sigma$,
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{2.jpg}
+    \caption{A simple recurrent neural network, and (b) A
+recurrent neural network unfolded over time.}
+    \label{fig:my_label}
+\end{figure}
+\subsection{Sequence Modeling With Long Short-Term Memory }
+The Long Short-Term Memory (LSTM) model [11] is
+one special Recurrent Neural Network frame which has powerful modeling capabilities for long-term dependencies. The main difference between a general RNN and an LSTM is  that  LSTM  has  a  more  complex  memory  cell $C_{t}$     to replace $s_{t}$  . Where the value of  the state $s_{t}$  in RNN is result of  a function over  the  weighted  average over $s_{t-1}$   and  $x_{t}$  , the LSTM state $C_{t}$   is accessed, written, and cleared through controlling gates. Information on a new input will be accumulated to the memory cell if it is activated. Combined, the LSTM model can be described by the following formulas:
+\begin{equation}
+    \begin{split}
+    f_{t}&=sigmoid(\omega_{f}\cdot[h_{t-1},x_{t}]+b_{f})  \\
+    i_{t}&=sigmoid(\omega_{i}\cdot[h_{i-1},x_{t}]+b_{i})  \\
+     C_{t}&=sigmoid(\omega_{c}\cdot[h_{t-1},x_{t}]+b_{C})\\
+    o_{t}&=sigmoid(\omega_{o}\cdot[h_{t-1},x_{t}]+b_{o}) \\
+    C_{t}&=f_{t}*C_{t-1}+i_{t}*C_{t}\\
+    h_{t}&=o_{t}*C_{t-1}*tanh(C_{t})
+    \end{split}
+\end{equation}
+Among all the formulas W variables represent weights while b variables mean biases and both of them are learned in the training phase.
+\subsection{Activity Prediction with LSTMs}
+In this part, we illustrate the evaluate techniques to predict the next activity with smart home data. The purpose of this is to learn a function for activity prediction such that $f_{\alpha}^{1}(hd^{k}=hd^{1}(tl^{k}(\pi_{A(\sigma)})))$ for any trace σ from the smart dataset and for any prefix length k.
+There existing several different LSTM architectures used to  model the next  activity prediction function $f_{\alpha}^{1}$  and model a function time $f_{t}^{1}$hat predicts the timestamp of the next event as well. First, we train two separate models, one for  $f_{\alpha}^{1}$ and the other for $f_{t}^{1}$ , both of them using same input features at each time step t(as shown in Figure 2 (a)). then, $f_{\alpha}^{1}$ and $f_{t}^{1}$ could be learned together in one single LSTM model which generates two outputs,within a multi-task learning setting ( as shown in Fig2 (b)). With the usage of LSTMs in the multi-task learning setting aims to improve performance on all tasks individually, including part-of- speech tagging, named entity recognition, and sentence classification [14]. What’s more, multi-task learning shows that it improves the accuracy on predicting the next activity
+and the timestamp of the next event in a study focusing on prediction in the context of business processes [16]. A hybrid option in-between the architectures of Figures 2 (a) and (b) is an architecture consisting of a number of shared LSTM layers for both tasks, followed by a number of layers that specialize in either prediction of the next activity or prediction of the time until the next event, as shown in Figure 2 (c).
+\begin{figure}[h]
+    \centering
+    \includegraphics{3.jpg}
+    \caption{The Neural Network of single-task layer (a), of shared multi- tasks layer (b), and of n + m layers(c).}
+    \label{fig:my_label}
+\end{figure}
+\subsection{EXPERIMENT RESULTS AND DISCUSSION}
+In order to evaluate the effectiveness of this model, extensive experiments were carried out based on seven har datasets(as shown in Table 1). Use tensorflow to build the model and train on GPU GTX 1070ti. The training batch size is set to 64, and Rmsprop with learning rate of 0.0001 is used to optimize the network. In addition, stair weight attenuation was applied after 10 epiches.
+\begin{table}[htbp]
+    \centering
+    \caption{DATASETS USED for EXPERIMENTS}
+    \label{tab:my_label}
+\end{table}
+\begin{figure}[h]
+    \centering
+    \includegraphics{4.jpg}
+    \label{fig:my_label}
+\end{figure}
+ Since we are interested in how well we could predict which sensor is going to trigger next and to predict what type of human activity is going to take place next. So, we evaluate the next activity prediction techniques on both sensor-level and activity-level datasets.
+Table 2 shows the obtained accuracy rates based on each of the neural network architectures on different datasets. The result shows that an architecture that composed of two neural network layers out of which with one shared layer that focuses on both the activity and the time prediction outperforms other architectures on all datasets. This indicates that there is gain in using multitask learning [14], i.e., jointly predicting the activity and the timestamp of the next event with one model leads to higher accuracy compared to predicting both with separate models. Surprisingly, the results show that an LSTM architecture outperforms a GRU architecture, which contrasts the finding that GRU architectures outperform LSTM architectures on many sequence modeling tasks [13].
+
+\section{CONCLUTION}
+        In this paper, we have evaluated several sequence prediction techniques on a collection of smart home datasets for the prediction of the next activity, the time until the next event, and the prediction of a window of next activities. We have found that LSTM neural networks outperform the other approaches for the prediction of the direct next event, and also have found that applying multi-task learning by jointly predicting the next activity and the timestamp of the next event outperforms separate LSTM models for both tasks separately. Additionally, the multi-task LSTM also outperforms other prediction tasks for the prediction of the timestamp of the next event. However, the LSTM does not outperform other approaches when we aim to predict a window of three next activities instead of only the direct next event. Instead, depending on the dataset, either an AKOM,LSTM, PPM, or DG is the best performing sequence prediction technique for predicting the next three activities.
+\begin{table}[htbp]
+    \centering
+    \caption{ ACCURACY OF NEXT EVENT PREDICTION WITH DIFFERENT NEURAL NETWORK ARCHITECTURES}
+    \label{tab:my_label}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{5.jpg}
+    \label{fig:my_label}
+\end{figure}
+\section{ACKNOWLEDGEMENT}
+This work is supported by the Provincial Natural Science Foundation of Liaoning(China) under grant No.2019-ZD- 0356.   
+\bibliographystyle{plain}
+\bibliography{references}
+\begin{thebibliography}{22}
+\bibitem{}
+Weiser, M., 1991. The computer for the 21st century. SIGMOBILE Mob. Comput. Commun. Rev. 3 (3), 3–11.
+\bibitem{}
+S. Hochreiter and J. Schmidhuber, “Long short-term memory,”
+Neural Computation, vol. 9, no. 8, pp. 1735–1780, 1997.
+\bibitem{}
+	R. Collobert and J. Weston, “A unified architecture for natural language processing: Deep neural networks with multitask learning,” in Proceedings of the International Conference on Machine Learning (ICML). ACM, 2008, pp. 160–167.
+	\bibitem{}
+N. Tax, I. Verenich, M. La Rosa, and M. Dumas, “Predictive business process monitoring with LSTM neural networks,” in Proceedings of the International Conference on Advanced Information Systems Engineering (CAiSE). Springer International Publishing, 2017, pp. 477–492.
+\bibitem{}
+	Luo  JianˈTang  JinˈMao  Fangˈet  alˊ  Research  of  wearable abnormal behavior detection system for elderly based on cloud computing  ˷J˹ˊ  Chinese  Journal  of  Sensors  ˂   Actuators ˈ 2015ˈ28 ( 8) : 1108- 1114ˊ
+\bibitem{}
+	Qiang Mao-shan ˈ Zhang Dong-cheng ˈ Jiang Han- chen ˊ Recognizing construction worker activities based on accelerometers˷J˹ˊ Journal of Tsinghua University( Science and Technology) ˈ2017ˈ57( 12) : 1338-1344
+	\bibitem{}
+		Cao  WˈLin  XˈZhang  Kˈet  alˊ  Analysis  and  evaluation  of driving behavior recognition based on a 3-axis accelerometer using a random forest approach: poster abstract ˷ C ˹ / /ACM /IEEE International Conference on Information Processing in Sensor Networksˈ IEEEˈ2017: 303-304
+	\bibitem{}
+	Wang  ZˈZhang  CˈXia  Hˊ  Research  on  new  human  behavior recognition method based on CNN and decision tree
+˷J˹ˊ  Application  Research  of  Computersˈ2017ˈ3(  31)  :  56- 65ˊ
+\bibitem{}
+	Qing Y E ˈ Deng J ˈ Zhang Y ˈ et al ˊ Human behavior recognition  based  on  CNN˷J˹ˊ  Computer  Simulationˈ2017ˈ 28( 7) : 245-248ˊ
+\bibitem{}
+[10]	Ronao C A ˈ Cho S B ˊ Human activity recognition with smartphone sensors using deep learning neural networks
+˷J˹ˊ  Expert  Systems  with  Applicationsˈ2016ˈ59(  C)  :  235- 244ˊ
+\bibitem{}
+Rodriguez-Martin  DˈSamà  AˈPerez-Lopez  Cˈet  alˊ   SVM- based posture identification with a single waist-located triaxial accelerometer ˷J˹ˊ Expert Systems with Applicationsˈ2013ˈ 40( 18) : 7203-7211
+\bibitem{}
+	Muscillo R ˈ Schmid M ˈ Conforto S ˈ et al ˊ An adaptive Kalmanbased Bayes estimation technique to classify locomotor activities in young and elderly adults through accelerometers
+˷J˹ˊ  Medical  Engineering  &  Physicsˈ2010ˈ32(  8)  :  849- 859ˊ
+\bibitem{}
+	Li Feng ˈ Pan Jing-kui ˊ Human motion recognition based on Triaxial  accelerometer˷J˹ˊ  Journal  of  Computer  Research  ˂ Developmentˈ2016ˈ53( 3) : 621-631ˊ
+	\bibitem{}
+	Huan Ruo-hong ˈ Chen Yue ˊ Method of human activity recognition based on feature enhancement and decision fusion
+˷J˹ˊ Computer Scienceˈ2016ˈ43( s2) : 151-155
+\bibitem{}
+	Liu  YuˈYu  YueˈLu  Yong-leˈet  alˊ  Real-time  human  activity recognition based on time-domain features of multi-sensor
+˷J˹ˊ  Journal  of  Chinese  Inertial  Technologyˈ2017ˈ25(  4)  : 455-460
+\bibitem{}
+	Qian  Li-pingˈLi  Peng-huanˈHuang  Liangˊ  Design  of  adaptive behavior recognition algorithm in dynamic data stream environment
+˷J˹ˊ Journal of Transduction Technologyˈ2017ˈ30( 6) : 909- 915ˊ
+\bibitem{}
+	Zeng  MˈNguyen  L  TˈYu  Bˈet  alˊ   Convolutional  neural networks for human activity recognition using mobile sensors˷C˹
+/  /Mobile  ComputingˈApplications  and  Services(  MobiCASE)  ˈ
+2014 6th International Conference on IEEEˈ2014: 197-205
+\bibitem{}
+	Kwapisz  J  RˈWeiss  G  MˈMoore  S  Aˊ  Activity  recognition using cell phone accelerometers ˷ J ˹ ˊ ACM SigKDD Explorations Newsletterˈ2011ˈ12( 2) : 74-82ˊ
+	\bibitem{}
+Shang  Chao-xuanˈWang  PinˈHan  Zhuang-zhiˈet  alˊ  Feature layer fusion recognition algorithm based on class decision tree classification˷J˹ˊ Control and Decisionˈ2016ˈ31( 6) : 1009- 1014ˊ
+\bibitem{}
+	Chen  ZˈZhu  Q ˈSoh  Y  C ˈet  alˊ   Robust  human  activity recognition using smartphone sensors via ct-pca and online svm
+˷J ˹ˊ   IEEE  Transactions  on  Industrial  Informatics ˈ 2017 ˈ 13( 6) : 3070-3080
+\bibitem{}
+	Yang Lu-luˊ The abnormal activity recognition of human based on the wearable sensor network ˷D˹ˊ Nanjing: Nanjing University of Posts and Telecommunicationsˈ2015
+\bibitem{}
+Abdallah  Z  SˈGaber  M  MˈSrinivasan  Bˈet  alˊ   Adaptive mobile activity recognition system with evolving data streams
+˷J˹ˊNeurocomputingˈ2015ˈ150( PA) : 304-317ˊ
+
+\end{thebibliography}
+\end{document}
